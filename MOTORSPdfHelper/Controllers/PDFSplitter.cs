@@ -39,7 +39,7 @@ namespace MOTORSPdfHelper.Controllers
 
             var output = PDFHelper.ZipPDFFiles(list);
                 
-            return File(output, "application/pdf", file.FileName + ".zip");
+            return File(output, "application/zip", file.FileName + ".zip");
         }
     }
 }
