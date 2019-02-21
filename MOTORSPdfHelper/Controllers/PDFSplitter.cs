@@ -15,9 +15,9 @@ namespace MOTORSPdfHelper.Controllers
     {
         protected ILogger logger;
         
-        public PDFSplitter(ILogger<PDFSplitter> logger)
+        public PDFSplitter(ILogger<PDFSplitter> _logger)
         {
-            logger = logger;
+            logger = _logger;
         }
         
         [HttpGet("/")]
@@ -35,6 +35,11 @@ namespace MOTORSPdfHelper.Controllers
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> DahSingRenewal(IFormFile file)
         {
+            if (!file.ContentType.Equals("application/pdf"))
+            {
+                throw new Exception("upload file not a PDF");
+            }
+            
             var list = PDFHelper.SplitDahSingRenewal(file.OpenReadStream());
 
             var output = PDFHelper.ZipPDFFiles(list);
