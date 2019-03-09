@@ -12,4 +12,7 @@
   <ItemGroup>
     <ProjectReference Include="..\PDFReader\PDFReader.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="sample\ouput" />
+  </ItemGroup>
 </Project>

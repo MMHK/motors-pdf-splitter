@@ -11,9 +11,9 @@ namespace PDFReader.Test
 {
     public class UnitTest1
     {
-        protected const string PDFPath = @"D:\_Sam\TestProject\C#\PDFReader\PDFReader\sample\DahSing-Renewal-201903.pdf";
+        protected const string PDFPath = @"C:\project\motors-pdf-splitter\PDFReader.Test\sample\combine-pdf-min.pdf";
 
-        protected const string OutPath = @"D:\_Sam\TestProject\C#\PDFReader\PDFReader\sample\output";
+        protected const string OutPath = @"C:\project\motors-pdf-splitter\PDFReader.Test\sample\ouput";
         
         protected readonly ITestOutputHelper output;
 
@@ -31,32 +31,52 @@ namespace PDFReader.Test
             PdfDocument outputDocument = new PdfDocument();
             
             outputDocument.Version = inputPDF.Version;
+            outputDocument.Info.Title = String.Format("Unkown-{0}", Guid.NewGuid());
             outputDocument.Info.Creator = inputPDF.Info.Creator;
-            string Number = null;
+            string Number = String.Empty;
             
             for (var i = 0; i < counter; i++)
             {
                 var text = PDFHelper.ExtractText(inputPDF.Pages[i]);
                 var combine = String.Join("", text);
-                
-                if (combine.Contains("EXPIRY NOTICE"))
+                var tmpPcyNo = PDFHelper.MatchPolicyNumber(combine);
+
+                if (Number == String.Empty && tmpPcyNo != null)
                 {
-                    if (Number != null)
+                    outputDocument.AddPage(inputPDF.Pages[i]);
+                    Number = tmpPcyNo;
+                    continue;
+                }
+                
+                if (!Number.Equals(tmpPcyNo))
+                {
+                    if (tmpPcyNo == null)
                     {
-                        outputDocument.Info.Title = Number;
-                        outputDocument.Save(Path.Combine(OutPath, Number + ".pdf"));
-                        outputDocument.Close();
-                        
-                        outputDocument = new PdfDocument();
-                        outputDocument.Version = inputPDF.Version;
-                        outputDocument.Info.Creator = inputPDF.Info.Creator;
+                        tmpPcyNo = String.Format("Unkown-{0}", Guid.NewGuid());
                     }
-                    Number = PDFHelper.MatchPolicyNumber(combine);
+                    
+                    outputDocument.Info.Title = Number;
+                    outputDocument.Save(Path.Combine(OutPath, Number + ".pdf"));
+                    outputDocument.Close();
+                    
+                    
+                    Number = tmpPcyNo;
+                    outputDocument = new PdfDocument();
+                    outputDocument.Info.Title = Number;
+                    outputDocument.Version = inputPDF.Version;
+                    outputDocument.Info.Creator = inputPDF.Info.Creator;
                     
                     output.WriteLine(Number);
                 }
                 
                 outputDocument.AddPage(inputPDF.Pages[i]);
+            }
+
+            if (outputDocument.Pages.Count > 0)
+            {
+                outputDocument.Info.Title = Number;
+                outputDocument.Save(Path.Combine(OutPath, Number + ".pdf"));
+                outputDocument.Close();
             }
         }
         

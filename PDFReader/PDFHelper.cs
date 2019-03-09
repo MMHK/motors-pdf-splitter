@@ -91,28 +91,45 @@ namespace PDFReader
             
             outputDocument.Version = inputPDF.Version;
             outputDocument.Info.Creator = inputPDF.Info.Creator;
-            string Number = null;
+            string Number = String.Empty;
             
             for (var i = 0; i < counter; i++)
             {
                 var text = ExtractText(inputPDF.Pages[i]);
                 var combine = String.Join("", text);
-                
-                if (combine.Contains("EXPIRY NOTICE"))
+                var tmpPcyNo = MatchPolicyNumber(combine);
+
+                if (Number == String.Empty && tmpPcyNo != null)
                 {
-                    if (Number != null)
+                    outputDocument.AddPage(inputPDF.Pages[i]);
+                    Number = tmpPcyNo;
+                    continue;
+                }
+                
+                if (!Number.Equals(tmpPcyNo))
+                {
+                    if (tmpPcyNo == null)
                     {
-                        outputDocument.Info.Title = Number;
-                        yield return outputDocument;
-                        
-                        outputDocument = new PdfDocument();
-                        outputDocument.Version = inputPDF.Version;
-                        outputDocument.Info.Creator = inputPDF.Info.Creator;
+                        tmpPcyNo = String.Format("Unkown-{0}", Guid.NewGuid());
                     }
-                    Number = MatchPolicyNumber(combine);
+                    
+                    outputDocument.Info.Title = Number;
+                    yield return outputDocument;
+                    
+                    Number = tmpPcyNo;
+                    outputDocument = new PdfDocument();
+                    outputDocument.Info.Title = Number;
+                    outputDocument.Version = inputPDF.Version;
+                    outputDocument.Info.Creator = inputPDF.Info.Creator;
                 }
                 
                 outputDocument.AddPage(inputPDF.Pages[i]);
+            }
+
+            if (outputDocument.Pages.Count > 0)
+            {
+                outputDocument.Info.Title = Number;
+                yield return outputDocument;
             }
             
             inputPDF.Close();

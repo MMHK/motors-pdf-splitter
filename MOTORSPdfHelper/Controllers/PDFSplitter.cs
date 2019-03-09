@@ -21,6 +21,7 @@ namespace MOTORSPdfHelper.Controllers
         }
         
         [HttpGet("/")]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public IActionResult Console()
         {
             return Redirect("/index.html");
