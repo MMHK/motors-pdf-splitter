@@ -11,7 +11,7 @@ namespace PDFReader.Test
 {
     public class UnitTest1
     {
-        protected const string PDFPath = @"C:\project\motors-pdf-splitter\PDFReader.Test\sample\combine-pdf-min.pdf";
+        protected const string PDFPath = @"D:\_Sam\TestProject\C#\PDFReader\sample\DS-RENEWAL-MAY.pdf";
 
         protected const string OutPath = @"C:\project\motors-pdf-splitter\PDFReader.Test\sample\ouput";
         

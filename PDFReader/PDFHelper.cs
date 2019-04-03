@@ -111,6 +111,11 @@ namespace PDFReader
                     if (tmpPcyNo == null)
                     {
                         tmpPcyNo = String.Format("Unkown-{0}", Guid.NewGuid());
+
+                        if (combine.Length == 0)
+                        {
+                            continue;
+                        }
                     }
                     
                     outputDocument.Info.Title = Number;
