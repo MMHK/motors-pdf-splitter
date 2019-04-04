@@ -13,7 +13,7 @@ namespace PDFReader.Test
     {
         protected const string PDFPath = @"D:\_Sam\TestProject\C#\PDFReader\sample\DS-RENEWAL-MAY.pdf";
 
-        protected const string OutPath = @"C:\project\motors-pdf-splitter\PDFReader.Test\sample\ouput";
+        protected const string OutPath = @"D:\_Sam\TestProject\C#\PDFReader\PDFReader\sample\output";
         
         protected readonly ITestOutputHelper output;
 
@@ -22,64 +22,6 @@ namespace PDFReader.Test
             this.output = output;
         }
 
-        [Fact]
-        public void TestSplitDocuments()
-        {
-            PdfDocument inputPDF = PdfReader.Open(PDFPath, PdfDocumentOpenMode.Import);
-
-            var counter = inputPDF.Pages.Count;
-            PdfDocument outputDocument = new PdfDocument();
-            
-            outputDocument.Version = inputPDF.Version;
-            outputDocument.Info.Title = String.Format("Unkown-{0}", Guid.NewGuid());
-            outputDocument.Info.Creator = inputPDF.Info.Creator;
-            string Number = String.Empty;
-            
-            for (var i = 0; i < counter; i++)
-            {
-                var text = PDFHelper.ExtractText(inputPDF.Pages[i]);
-                var combine = String.Join("", text);
-                var tmpPcyNo = PDFHelper.MatchPolicyNumber(combine);
-
-                if (Number == String.Empty && tmpPcyNo != null)
-                {
-                    outputDocument.AddPage(inputPDF.Pages[i]);
-                    Number = tmpPcyNo;
-                    continue;
-                }
-                
-                if (!Number.Equals(tmpPcyNo))
-                {
-                    if (tmpPcyNo == null)
-                    {
-                        tmpPcyNo = String.Format("Unkown-{0}", Guid.NewGuid());
-                    }
-                    
-                    outputDocument.Info.Title = Number;
-                    outputDocument.Save(Path.Combine(OutPath, Number + ".pdf"));
-                    outputDocument.Close();
-                    
-                    
-                    Number = tmpPcyNo;
-                    outputDocument = new PdfDocument();
-                    outputDocument.Info.Title = Number;
-                    outputDocument.Version = inputPDF.Version;
-                    outputDocument.Info.Creator = inputPDF.Info.Creator;
-                    
-                    output.WriteLine(Number);
-                }
-                
-                outputDocument.AddPage(inputPDF.Pages[i]);
-            }
-
-            if (outputDocument.Pages.Count > 0)
-            {
-                outputDocument.Info.Title = Number;
-                outputDocument.Save(Path.Combine(OutPath, Number + ".pdf"));
-                outputDocument.Close();
-            }
-        }
-        
         [Fact]
         public void TestSplitDahSingRenewal()
         {

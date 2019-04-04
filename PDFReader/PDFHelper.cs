@@ -91,49 +91,35 @@ namespace PDFReader
             
             outputDocument.Version = inputPDF.Version;
             outputDocument.Info.Creator = inputPDF.Info.Creator;
-            string Number = String.Empty;
+            string Number = null;
             
             for (var i = 0; i < counter; i++)
             {
                 var text = ExtractText(inputPDF.Pages[i]);
                 var combine = String.Join("", text);
-                var tmpPcyNo = MatchPolicyNumber(combine);
-
-                if (Number == String.Empty && tmpPcyNo != null)
-                {
-                    outputDocument.AddPage(inputPDF.Pages[i]);
-                    Number = tmpPcyNo;
-                    continue;
-                }
                 
-                if (!Number.Equals(tmpPcyNo))
+                if (combine.Contains("EXPIRY NOTICE"))
                 {
-                    if (tmpPcyNo == null)
+                    if (Number != null)
                     {
-                        tmpPcyNo = String.Format("Unkown-{0}", Guid.NewGuid());
-
-                        if (combine.Length == 0)
-                        {
-                            continue;
-                        }
+                        var flag = outputDocument.PageCount > 4 ? "-error" : "";
+                        outputDocument.Info.Title = Number + flag;
+                        yield return outputDocument;
+                        
+                        outputDocument = new PdfDocument();
+                        outputDocument.Version = inputPDF.Version;
+                        outputDocument.Info.Creator = inputPDF.Info.Creator;
                     }
-                    
-                    outputDocument.Info.Title = Number;
-                    yield return outputDocument;
-                    
-                    Number = tmpPcyNo;
-                    outputDocument = new PdfDocument();
-                    outputDocument.Info.Title = Number;
-                    outputDocument.Version = inputPDF.Version;
-                    outputDocument.Info.Creator = inputPDF.Info.Creator;
+                    Number = MatchPolicyNumber(combine);
                 }
                 
                 outputDocument.AddPage(inputPDF.Pages[i]);
             }
-
+            
             if (outputDocument.Pages.Count > 0)
             {
-                outputDocument.Info.Title = Number;
+                var flag = outputDocument.PageCount > 4 ? "-error" : "";
+                outputDocument.Info.Title = Number + flag;
                 yield return outputDocument;
             }
             
