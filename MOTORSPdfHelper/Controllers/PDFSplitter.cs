@@ -47,5 +47,26 @@ namespace MOTORSPdfHelper.Controllers
                 
             return File(output, "application/zip", file.FileName + ".zip");
         }
+        
+        /// <summary>
+        ///  切分 Zurich Renewal PDF
+        /// </summary>
+        /// <param name="file"></param>
+        /// <returns></returns>
+        [HttpPost("/zurich/renewal")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> ZurichRenewal(IFormFile file)
+        {
+            if (!file.ContentType.Equals("application/pdf"))
+            {
+                throw new Exception("upload file not a PDF");
+            }
+            
+            var list = PDFHelper.SplitZurichRenewal(file.OpenReadStream());
+
+            var output = PDFHelper.ZipPDFFiles(list);
+                
+            return File(output, "application/zip", file.FileName + ".zip");
+        }
     }
 }

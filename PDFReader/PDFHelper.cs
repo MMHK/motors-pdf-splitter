@@ -64,10 +64,28 @@ namespace PDFReader
             }
         }
 
-        public static string MatchPolicyNumber(string src)
+        public static string MatchDahSingPolicyNumber(string src)
         {
             var config = new RegexConfig();
             config.Pattern = @"[0-9a-zA-Z]{6}(P|C)MV[0-9]{2}-[0-9]{1}";
+            var reg = new Regex(config.Pattern, RegexOptions.IgnoreCase);
+            var matches = reg.Matches(src);
+            if (matches.Count > 0)
+            {
+                var match = matches.Cast<Match>().FirstOrDefault();
+                if (match != null)
+                {
+                    return match.Value;
+                }
+            }
+
+            return null;
+        }
+        
+        public static string MatchZurichPolicyNumber(string src)
+        {
+            var config = new RegexConfig();
+            config.Pattern = @"Z[A-Z]{2}[0-9a-zA-Z]{7,10}ZC";
             var reg = new Regex(config.Pattern, RegexOptions.IgnoreCase);
             var matches = reg.Matches(src);
             if (matches.Count > 0)
@@ -102,7 +120,7 @@ namespace PDFReader
                 {
                     if (Number != null)
                     {
-                        var flag = outputDocument.PageCount > 4 ? "-error" : "";
+                        var flag = "-" + outputDocument.PageCount;
                         outputDocument.Info.Title = Number + flag;
                         yield return outputDocument;
                         
@@ -110,7 +128,7 @@ namespace PDFReader
                         outputDocument.Version = inputPDF.Version;
                         outputDocument.Info.Creator = inputPDF.Info.Creator;
                     }
-                    Number = MatchPolicyNumber(combine);
+                    Number = MatchDahSingPolicyNumber(combine);
                 }
                 
                 outputDocument.AddPage(inputPDF.Pages[i]);
@@ -118,7 +136,51 @@ namespace PDFReader
             
             if (outputDocument.Pages.Count > 0)
             {
-                var flag = outputDocument.PageCount > 4 ? "-error" : "";
+                var flag = "-" + outputDocument.PageCount;
+                outputDocument.Info.Title = Number + flag;
+                yield return outputDocument;
+            }
+            
+            inputPDF.Close();
+        }
+        
+        public static IEnumerable<PdfDocument> SplitZurichRenewal(Stream input)
+        {
+            PdfDocument inputPDF = PdfReader.Open(input, PdfDocumentOpenMode.Import);
+
+            var counter = inputPDF.Pages.Count;
+            PdfDocument outputDocument = new PdfDocument();
+            
+            outputDocument.Version = inputPDF.Version;
+            outputDocument.Info.Creator = inputPDF.Info.Creator;
+            string Number = null;
+            
+            for (var i = 0; i < counter; i++)
+            {
+                var text = ExtractText(inputPDF.Pages[i]);
+                var combine = String.Join("", text).Replace("\r\n", "");
+                
+                if (combine.Contains("Private Car Insurance Renewal Notice"))
+                {
+                    if (Number != null)
+                    {
+                        var flag = "-" + outputDocument.PageCount;
+                        outputDocument.Info.Title = Number + flag;
+                        yield return outputDocument;
+                        
+                        outputDocument = new PdfDocument();
+                        outputDocument.Version = inputPDF.Version;
+                        outputDocument.Info.Creator = inputPDF.Info.Creator;
+                    }
+                    Number = MatchZurichPolicyNumber(combine);
+                }
+                
+                outputDocument.AddPage(inputPDF.Pages[i]);
+            }
+            
+            if (outputDocument.Pages.Count > 0)
+            {
+                var flag = "-" + outputDocument.PageCount;
                 outputDocument.Info.Title = Number + flag;
                 yield return outputDocument;
             }
